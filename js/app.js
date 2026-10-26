@@ -185,11 +185,20 @@
     var out = $('.cb-out', cb);
     var dot = $('.dot', cb);
     var solvedTag = $('.solved', cb);
+    var answerBtn = $('[data-act="answer"]', cb);
     var rec = { id: id, cb: cb, blanks: blanks, run: run, hasBlanks: blanks.length > 0 };
+
+    // 정답 보기는 직접 맞힌 뒤에만 열린다
+    function lockAnswer(locked) {
+      if (!answerBtn) return;
+      answerBtn.disabled = locked;
+      answerBtn.title = locked ? '빈칸을 직접 맞히면 정답 보기가 열립니다.' : '';
+    }
 
     function markSolved() {
       dot.classList.add('ok');
       solvedTag.hidden = false;
+      lockAnswer(false);
       if (!state.solved[id]) { state.solved[id] = true; save(); updateProgress(); }
     }
 
@@ -242,17 +251,23 @@
           if (target) target.input.focus();
         }
         if (act === 'answer') {
+          if (!state.solved[id]) {
+            msg.className = 'msg err';
+            msg.textContent = '먼저 빈칸을 직접 채워 실행해 보세요. 맞히면 정답 보기가 열립니다.';
+            return;
+          }
           blanks.forEach(function (b) {
             b.input.value = b.answers[0];
             b.input.classList.add('ok');
             b.input.classList.remove('bad');
           });
           msg.className = 'msg';
-          msg.textContent = '정답을 채웠습니다. 실행을 눌러 결과를 확인하세요.';
+          msg.textContent = '모범 답안을 채웠습니다.';
         }
       });
     });
 
+    lockAnswer(!state.solved[id]);
     if (state.solved[id]) {
       blanks.forEach(function (b) {
         b.input.value = b.answers[0];
